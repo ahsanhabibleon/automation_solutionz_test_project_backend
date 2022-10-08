@@ -20,7 +20,6 @@ const utils_1 = require("../utils");
 const userRouter = express_1.default.Router();
 userRouter.post('/signin', (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield userModel_1.default.findOne({ email: req.body.email });
-    console.log({ user });
     if (user) {
         if (bcryptjs_1.default.compareSync(req.body.password, user.password)) {
             res.send({
