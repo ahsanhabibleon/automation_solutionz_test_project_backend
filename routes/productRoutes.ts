@@ -1,12 +1,64 @@
 import express from 'express';
+import expressAsyncHandler from 'express-async-handler';
 import Product from '../models/productModel';
 
 const productRouter = express.Router();
+const PAGE_SIZE = 10;
 
-productRouter.get('/', async (req, res) => {
-    const products = await Product.find()
-    res.send(products)
-})
+productRouter.get(
+    '/',
+    expressAsyncHandler(async (req, res) => {
+        const query: any = req.query;
+        const pageSize: number = query.pageSize || PAGE_SIZE;
+        const page: number = query.page || 1;
+        const type: string = query.category || '';
+        const price: any = query?.price || '';
+        const searchQuery: string = query.query || '';
+
+        const queryFilter =
+            searchQuery && searchQuery !== 'all'
+                ? {
+                    name: {
+                        $regex: searchQuery,
+                        $options: 'i',
+                    },
+                }
+                : {};
+        const categoryFilter = type && type !== 'all' ? { type } : {};
+
+        const priceFilter =
+            price && price !== 'all'
+                ? {
+                    // 1-50
+                    price: {
+                        $gte: Number(price.split('-')[0]),
+                        $lte: Number(price.split('-')[1]),
+                    },
+                }
+                : {};
+
+        const products = await Product.find({
+            ...queryFilter,
+            ...categoryFilter,
+            ...priceFilter,
+        })
+            .skip(pageSize * (page - 1))
+            .limit(pageSize);
+
+        const countProducts = await Product.countDocuments({
+            ...queryFilter,
+            ...categoryFilter,
+            ...priceFilter,
+        });
+        res.send({
+            products,
+            countProducts,
+            page,
+            pageSize,
+            pages: Math.ceil(countProducts / pageSize),
+        });
+    })
+);
 
 productRouter.get('/slug/:slug', async (req, res) => {
     const product = await Product.findOne({ slug: req.params.slug });

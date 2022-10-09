@@ -25,8 +25,6 @@ app.listen(port, () => {
     console.log(`⚡️[server]: Server is running at https://localhost:${port}`);
 });
 
-
-
 //connect to mongodb
 const connectDB = async () => {
     await mongoose.connect(process.env.MONGODB_URI || '');

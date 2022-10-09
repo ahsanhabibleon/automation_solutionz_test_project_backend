@@ -23,6 +23,7 @@ const ProductSchema = new mongoose_1.default.Schema({
     bookedBy: {
         name: { type: String, required: false },
         userId: { type: String, required: false },
+        email: { type: String, required: false },
     },
     bookedOn: { type: String, required: false },
 }, {

@@ -20,15 +20,14 @@ const ProductSchema = new mongoose.Schema(
         bookedBy: {
             name: { type: String, required: false },
             userId: { type: String, required: false },
+            email: { type: String, required: false },
         },
         bookedOn: { type: String, required: false },
-
     },
     {
         timestamps: true
     }
 )
-
 
 const Product = mongoose.model('Product', ProductSchema);
 

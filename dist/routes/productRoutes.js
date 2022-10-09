@@ -13,12 +13,47 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const productModel_1 = __importDefault(require("../models/productModel"));
 const productRouter = express_1.default.Router();
-productRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const products = yield productModel_1.default.find();
-    res.send(products);
-}));
+const PAGE_SIZE = 10;
+productRouter.get('/', (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const query = req.query;
+    const pageSize = query.pageSize || PAGE_SIZE;
+    const page = query.page || 1;
+    const type = query.category || '';
+    const price = (query === null || query === void 0 ? void 0 : query.price) || '';
+    const searchQuery = query.query || '';
+    const queryFilter = searchQuery && searchQuery !== 'all'
+        ? {
+            name: {
+                $regex: searchQuery,
+                $options: 'i',
+            },
+        }
+        : {};
+    const categoryFilter = type && type !== 'all' ? { type } : {};
+    const priceFilter = price && price !== 'all'
+        ? {
+            // 1-50
+            price: {
+                $gte: Number(price.split('-')[0]),
+                $lte: Number(price.split('-')[1]),
+            },
+        }
+        : {};
+    const products = yield productModel_1.default.find(Object.assign(Object.assign(Object.assign({}, queryFilter), categoryFilter), priceFilter))
+        .skip(pageSize * (page - 1))
+        .limit(pageSize);
+    const countProducts = yield productModel_1.default.countDocuments(Object.assign(Object.assign(Object.assign({}, queryFilter), categoryFilter), priceFilter));
+    res.send({
+        products,
+        countProducts,
+        page,
+        pageSize,
+        pages: Math.ceil(countProducts / pageSize),
+    });
+})));
 productRouter.get('/slug/:slug', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const product = yield productModel_1.default.findOne({ slug: req.params.slug });
     if (product) {
